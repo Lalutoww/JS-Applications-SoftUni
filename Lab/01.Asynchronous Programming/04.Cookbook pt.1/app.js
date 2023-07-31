@@ -1,82 +1,76 @@
-async function getRecipes() {
-    const response = await fetch('http://localhost:3030/jsonstore/cookbook/recipes');
-    const recipes = await response.json();
+async function loadAllRecipies() {
+   const url = `http://localhost:3030/jsonstore/cookbook/recipes`;
+   const response = await fetch(url);
+   if (!response.ok) {
+      throw new Error();
+   }
+   document.querySelector('p').style.display = 'none';
+   const data = await response.json();
+   for (const element of Object.values(data)) {
+      const article = createFoodPreview(element);
+      article.addEventListener('click', loadRecipe);
+   }
+}
+loadAllRecipies();
 
-    return Object.values(recipes);
+async function loadRecipe(e) {
+   const url = `http://localhost:3030/jsonstore/cookbook/details/${e.target.getAttribute(
+      'id'
+   )}`;
+   const response = await fetch(url);
+   if (!response.ok) {
+      throw new Error();
+   }
+   const data = await response.json();
+   const main = document.querySelector('main');
+   let ingredients = '';
+   for (const element of data.ingredients) {
+      ingredients += `<li>${element}</li>\n`;
+   }
+   let preparation = '';
+   for (const element of data.steps) {
+      preparation += `<p>${element}</p>\n`;
+   }
+   main.innerHTML = `<article>
+      <h2>${data.name}</h2>
+      <div class="band">
+          <div class="thumb">
+              <img src="${data.img}">
+          </div>
+          <div class="ingredients">
+              <h3>Ingredients:</h3>
+              <ul>
+                  ${ingredients}
+              </ul>
+          </div>
+      </div>
+      <div class="description">
+          <h3>Preparation:</h3>
+          ${preparation}
+      </div>
+   </article>`;
 }
 
-async function getRecipeById(id) {
-    const response = await fetch('http://localhost:3030/jsonstore/cookbook/details/' + id);
-    const recipe = await response.json();
+//Helper Function
+function createFoodPreview(element) {
+   const article = document.createElement('article');
+   article.classList.add('preview');
+   article.setAttribute('id', `${element._id}`);
+   const div = document.createElement('div');
+   div.classList.add('title');
+   const h2 = document.createElement('h2');
+   h2.textContent = `${element.name}`;
+   const div2 = document.createElement('div');
+   div2.classList.add('small');
+   const img = document.createElement('img');
+   img.setAttribute('src', element.img);
 
-    return recipe;
-}
+   const main = document.querySelector('main');
+   main.appendChild(article);
+   article.appendChild(div);
+   div.appendChild(h2);
+   article.appendChild(div2);
+   div2.appendChild(img);
 
-function createRecipePreview(recipe) {
-    const result = e('article', { className: 'preview', onClick: toggleCard },
-        e('div', { className: 'title' }, e('h2', {}, recipe.name)),
-        e('div', { className: 'small' }, e('img', { src: recipe.img })),
-    );
-
-    return result;
-
-    async function toggleCard() {
-        const fullRecipe = await getRecipeById(recipe._id);
-
-        result.replaceWith(createRecipeCard(fullRecipe));
-    }
-}
-
-function createRecipeCard(recipe) {
-    const result = e('article', {},
-        e('h2', {}, recipe.name),
-        e('div', { className: 'band' },
-            e('div', { className: 'thumb' }, e('img', { src: recipe.img })),
-            e('div', { className: 'ingredients' },
-                e('h3', {}, 'Ingredients:'),
-                e('ul', {}, recipe.ingredients.map(i => e('li', {}, i))),
-            )
-        ),
-        e('div', { className: 'description' },
-            e('h3', {}, 'Preparation:'),
-            recipe.steps.map(s => e('p', {}, s))
-        ),
-    );
-
-    return result;
-}
-
-window.addEventListener('load', async () => {
-    const main = document.querySelector('main');
-
-    const recipes = await getRecipes();
-    const cards = recipes.map(createRecipePreview);
-
-    main.innerHTML = '';
-    cards.forEach(c => main.appendChild(c));
-});
-
-function e(type, attributes, ...content) {
-    const result = document.createElement(type);
-
-    for (let [attr, value] of Object.entries(attributes || {})) {
-        if (attr.substring(0, 2) == 'on') {
-            result.addEventListener(attr.substring(2).toLocaleLowerCase(), value);
-        } else {
-            result[attr] = value;
-        }
-    }
-
-    content = content.reduce((a, c) => a.concat(Array.isArray(c) ? c : [c]), []);
-
-    content.forEach(e => {
-        if (typeof e == 'string' || typeof e == 'number') {
-            const node = document.createTextNode(e);
-            result.appendChild(node);
-        } else {
-            result.appendChild(e);
-        }
-    });
-
-    return result;
+   return article;
 }
