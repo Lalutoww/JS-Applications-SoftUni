@@ -8,3 +8,4 @@ In the JS Applications course, students will learn what HTTP requests are and ho
 - Working with REST APIs and asynchronous programming
 - Application testing
 #
+![JS Applications - June 2023 - Certificate](https://github.com/Lalutoww/JS-Applications-SoftUni/assets/47317818/05c32aac-a375-4a59-a3b6-2045063f22ee)
